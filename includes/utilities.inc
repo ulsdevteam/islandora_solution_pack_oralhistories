@@ -266,9 +266,10 @@ function compose_vtt_transcript_as_transcripts_ui($ui) {
     $tcus[$i]->id = $i;
     $tcus[$i]->start = (float) $cue['start_time'];
     $tcus[$i]->end = (float) $cue['end_time'];
-    $tcus[$i]->or_transcript = $cue['text'];
+    $tcus[$i]->or_transcript = islandora_oralhistories_replace_c_with_class(($cue['text']));
     $tcus[$i]->or_speaker = $cue['name'];
     $i++;
+    $strs[] = html_entity_decode($cue['text']);
   }
   // VTT does not have highlights ?
   $highlights = NULL;
@@ -291,4 +292,28 @@ function islandora_oralhistories_islandora_oralhistories_get_media_uploaded_type
     }
   }
   return $media_upload_type;
+}
+
+/**
+ * This takes the transcript text with WebVTT tags and converts a <c> tag that has
+ * class names and converts it into a <span> with the appropriate class values.
+ *
+ * @param string $text
+ * @return string
+ */
+function islandora_oralhistories_replace_c_with_class($text) {
+  $text = html_entity_decode($text);
+  $has_c_tag = (strstr($text, "</c>"));
+  if ($has_c_tag) {
+    $regex_vtt_name = '/<(?<name>[c][\w.]+)>/';
+    preg_match($regex_vtt_name, $text, $matches);
+    if (isset($matches['name'])) {
+      $tagname = $matches['name'];
+      $class_names = str_replace(array('c.', '.'), array('', ' '), $tagname);
+      if ($class_names) {
+        $text = str_replace(array("</c>", $tagname), array("</div>", 'div class="' . $class_names . '"'), $text);
+      }
+    }
+  }
+  return $text;
 }
