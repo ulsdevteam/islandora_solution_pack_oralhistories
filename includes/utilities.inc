@@ -53,9 +53,12 @@ function islandora_oralhistories_parse_vtt($data = '') {
       $time = explode(' --> ', $parts[1]);
       $start_time = islandora_oralhistories_time_seconds($time[0]);
       $end_time = islandora_oralhistories_time_seconds($time[1]);
-
-      // Redmine#6611
-      $text = $parts[2];
+      // Need to support multi-lined transcript values by gluing together all
+      // parts from 2 ... count($parts)
+      $text = '';
+      for ($i = 2; $i < count($parts); $i++) {
+        $text .= $parts[$i] . $split_char;
+      }
       $regex_vtt_name = '/^\s*<v\s+(?<name>.*)>/';
       preg_match($regex_vtt_name, $text, $matches);
 
@@ -252,10 +255,8 @@ function compose_vtt_transcript_as_transcripts_ui($ui) {
 
   // Get content from VTT file.
   $content = islandora_oralhistories_get_datastream_from_url($url);
-
   // Parse the VTT for tcues data.
   $cues = islandora_oralhistories_parse_vtt($content);
-
   // Loop and put in a format needed by transcripts_ui
   $tcus = array();
   $i = 0;
@@ -269,7 +270,6 @@ function compose_vtt_transcript_as_transcripts_ui($ui) {
     $tcus[$i]->or_transcript = islandora_oralhistories_replace_c_with_class(($cue['text']));
     $tcus[$i]->or_speaker = $cue['name'];
     $i++;
-    $strs[] = html_entity_decode($cue['text']);
   }
   // VTT does not have highlights ?
   $highlights = NULL;
@@ -302,16 +302,18 @@ function islandora_oralhistories_islandora_oralhistories_get_media_uploaded_type
  * @return string
  */
 function islandora_oralhistories_replace_c_with_class($text) {
-  $text = html_entity_decode($text);
+  $text = str_replace("\n", "<br>\n", html_entity_decode($text));
   $has_c_tag = (strstr($text, "</c>"));
   if ($has_c_tag) {
     $regex_vtt_name = '/<(?<name>[c][\w.]+)>/';
-    preg_match($regex_vtt_name, $text, $matches);
+    preg_match_all($regex_vtt_name, $text, $matches);
     if (isset($matches['name'])) {
-      $tagname = $matches['name'];
-      $class_names = str_replace(array('c.', '.'), array('', ' '), $tagname);
-      if ($class_names) {
-        $text = str_replace(array("</c>", $tagname), array("</div>", 'div class="' . $class_names . '"'), $text);
+      foreach ($matches['name'] as $match) {
+        $tagname = $match;
+        $class_names = str_replace(array('c.', '.'), array('', ' '), $tagname);
+        if ($class_names) {
+          $text = str_replace(array("</c>", $tagname), array("</div>", 'div class="' . $class_names . '"'), $text);
+        }
       }
     }
   }
