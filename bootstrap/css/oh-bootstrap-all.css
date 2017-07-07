@@ -4030,14 +4030,18 @@ div.islandora-oralhistories-content {
     list-style: none; }
   div.islandora-oralhistories-content .list-group {
     padding-left: 0;
-    margin-bottom: 20px; }
+    margin-bottom: 20px;
+    background-color: black;
+    color: #666;
+  }
   div.islandora-oralhistories-content .list-group-item {
     position: relative;
     display: block;
     padding: 10px 15px;
     margin-bottom: -1px;
-    background-color: #fff;
-    border: 1px solid #ddd; }
+    background-color: inherit;
+    border: 1px solid #ddd;
+  }
   div.islandora-oralhistories-content .list-group-item:first-child {
     border-top-left-radius: 4px;
     border-top-right-radius: 4px; }
