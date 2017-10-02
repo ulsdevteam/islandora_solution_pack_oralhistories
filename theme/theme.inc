@@ -101,9 +101,9 @@ function islandora_oralhistories_preprocess_islandora_oralhistories(array &$vari
   }
 
   // Thumbnail.
-  if (isset($object['TN']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object['TN'])) {
+  if (isset($object['TN_LARGE']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object['TN_LARGE'])) {
     $viewer_params += array(
-      'tn' => url("islandora/object/{$object->id}/datastream/TN/view", array('absolute' => TRUE)),
+      'tn' => url("islandora/object/{$object->id}/datastream/TN_LARGE/view", array('absolute' => TRUE)),
     );
   }
 
