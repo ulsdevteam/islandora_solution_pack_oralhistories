@@ -139,7 +139,6 @@ function islandora_oralhistories_preprocess_islandora_oralhistories(array &$vari
       $track['dsid'] = $datastream->id;
       $track['source_url'] = $source_url;
 
-
       if ($isMediatrack) {
         // Language Code.
         $lang_code = 'en';
@@ -164,10 +163,13 @@ function islandora_oralhistories_preprocess_islandora_oralhistories(array &$vari
           $track['default'] = "default";
         }
       } else {
-        $track['lang_code'] = '';
-        $track['default'] = '';
+        // The initial code sets empty strings for both values here -- this HACK will ensure that the
+        // non /MEDIATRACK/ objects will still display a transcript.
+        //
+        // TODO:  Further logic may need to be added here.
+        $track['lang_code'] = 'English';
+        $track['default'] = 'default';
       }
-
 
       if (isset($object[$datastream->id]) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object[$datastream->id])) {
         $tracks[] = $track;
