@@ -5,6 +5,8 @@
  * Utility functions.
  */
 
+require_once(__DIR__ . '/lib/VttConverter.php');
+
 /**
  * Helper function to build transcript content.
  *
@@ -51,18 +53,29 @@ function islandora_oralhistories_parse_vtt($data = '') {
         $name = $matches['name'];
         $text = preg_replace($regex_vtt_name, '', $text);
       }
-
-      $text = preg_replace('/</', '&lt;', $text);
-      $text = preg_replace('/>/', '&gt;', $text);
-      $cues[] = array(
-        'start_time' => $start_time,
-        'end_time' => $end_time,
-        'text' => $text,
-        'name' => $name,
-      );
     }
-  } // end foreach
+  }
+}
+function parse_vtt($data = '') {
+  $oConverter = new VttConverter();
+  $oVttData = $oConverter->fileContentToInternalFormat($data);
 
+  $cues = array();
+  foreach ($oVttData as $key => $vttData) {
+    $start_time = $vttData['start'];
+    $end_time = $vttData['end'];
+    $name = $vttData['name'];
+    $lines = $vttData['lines'];
+    $lines= array_map('trim', $lines);
+    $text = implode(" ", $lines);
+
+    $cues[] = array(
+      'start_time' => $start_time,
+      'end_time' => $end_time,
+      'text' => $text,
+      'name' => $name,
+    );
+  }
   return $cues;
 }
 
@@ -200,10 +213,28 @@ function islandora_oralhistories_transcripts_ui_transcript($ui) {
         }
       }
     }
+  } else {
+    watchdog('Islandora Oralhistories', "Solr query for '$query' in " . __FUNCTION__ . " (file " . __FILE__ . ") returned no results. ", $variables = array(), $severity = WATCHDOG_WARNING, $link = NULL);
   }
 
   $highlights = isset($json['highlighting']) ? $json['highlighting'] : NULL;
   return array($tcus, $highlights);
+}
+
+/**
+ * This will use the islandora functions to return the datastream that is specified by the $url.
+ * 
+ * @param type $url
+ */
+function islandora_oralhistories_get_datastream_from_url($url) {
+  // This is a bit of a hacky way to pull the $pid and $dsid from the $url for the datastream view.
+  @list($junk, $keep) = explode("/islandora/object/", $url);
+  @list($pid, $keep) = explode("/datastream/", $keep);
+  $pid = urldecode($pid);
+  $dsid = str_replace("/view", "", $keep);
+
+  $islandora_object = islandora_object_load($pid);
+  return ((is_object($islandora_object) && (isset($islandora_object[$dsid]))) ? $islandora_object[$dsid]->content : '');
 }
 
 /**
@@ -221,7 +252,8 @@ function compose_vtt_transcript_as_transcripts_ui($ui) {
   $url = $options["url"];
 
   // Get content from VTT file.
-  $content = file_get_contents($url);
+  $content = islandora_oralhistories_get_datastream_from_url($url);
+
   // Parse the VTT for tcues data.
   $cues = islandora_oralhistories_parse_vtt($content);
 
