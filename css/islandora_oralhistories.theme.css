@@ -151,3 +151,7 @@ body.two-sidebars .islandora-oralhistories-sidebar {
 .ctools-modal-dialog #modal-content {
     overflow-x: auto;
 }
+
+.vjs-tt-cue div {
+    opacity: 0.5;
+}
